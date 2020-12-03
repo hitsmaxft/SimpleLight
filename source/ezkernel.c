@@ -2607,11 +2607,13 @@ re_showfile:
 						break;
 					}
 					else if (MENU_line == 1) {
-						//display message saying to delete last game first
+						//delete last game
+						//TODO  only delete last game
 						if (show_offset + file_select + 1 == game_total_NOR) {
 							Block_Erase(gl_norOffset - pNorFS[show_offset + file_select].filesize);
 						}
 						else {
+						//display message saying to delete last game first
 							DrawHZText12(gl_lastest_game, 0, 66, 88, gl_color_text, 1);
 							DrawHZText12(gl_lastest_game2, 0, 66, 103, gl_color_text, 1);
 							wait_btn();
