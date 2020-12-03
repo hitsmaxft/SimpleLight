@@ -206,7 +206,7 @@ const char *zh_more_options[5]={
 	"«–ªª¿‰∆Ù∂Ø",
 	"«–ªª±∏∑›",
 	"«–ªª¥÷ÃÂ",
-	"«–ªª∂‡±∏∑›",
+	"«–ªª∂‡¥Êµµ",
 };
 
 //English
@@ -305,7 +305,7 @@ const char *en_nor_op[4]={
 	"Direct boot",
 	"Delete last",
 	"Delete all",
-	"Format all",
+	"LL format NOR",
 };	
 const char *en_more_options[5]={
 	"Toggle thumbnail",

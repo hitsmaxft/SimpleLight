@@ -2558,7 +2558,7 @@ re_showfile:
 			havecht = Check_cheat_file(pfilename);
 			old_Save_num = Check_mde_file(pfilename);
 			Save_num = old_Save_num;
-			MENU_max = (page_num == NOR_list) ? 2 : (4 + ((gl_cheat_on == 1) ? ((havecht > 0) ? 1 : 0) : 0));
+			MENU_max = (page_num == NOR_list) ? 3 : (4 + ((gl_cheat_on == 1) ? ((havecht > 0) ? 1 : 0) : 0));
 		}
 	re_show_menu:
 		DrawPic((u16*)gImage_MENU, 56, 25, 128, 110, 1, 0, 1);//show menu pic
