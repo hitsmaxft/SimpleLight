@@ -1,5 +1,6 @@
 # Build Files
 build/
+build_bin/
 /*.bin
 /*.elf
 /*.gba
@@ -9,3 +10,6 @@ copy.bat
 .vscode/
 /*.pnpproj
 /*.pnps
+
+# mac
+.DS_store

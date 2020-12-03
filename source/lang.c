@@ -196,7 +196,7 @@ const char *zh_rom_menu[]={
 };
 const char *zh_nor_op[3]={
 	"直接运行",
-	"删除",
+	"删除最后一个",
 	"全部格式化",
 };
 
@@ -301,7 +301,7 @@ const char *en_rom_menu[] = {
 };
 const char *en_nor_op[3]={
 	"Direct boot",
-	"Delete",
+	"Delete last",
 	"Format all",
 };	
 const char *en_more_options[4]={

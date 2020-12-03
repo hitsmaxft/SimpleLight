@@ -247,8 +247,11 @@ u8 str_len;
         dmaCopy(&tmpNorFS,&pNorFS[game_total_NOR], sizeof(FM_NOR_FS));
         Clear(0,160-15,240,15,gl_color_cheat_black,1);
         ShowbootProgress(gl_copying_data);
+
+
         for(blocknum=0; blocknum<filesize; blocknum+=0x20000) {
-            sprintf(msg,"%luMb/%luMb",(blocknum)/0x20000, (filesize)/0x20000);
+            //show file size process
+            sprintf(msg,"%luMb/%luMb",(blocknum)/0x20000, filesize);
 			str_len = strlen(msg);
             Clear(0,130,240,15,gl_color_cheat_black,1);
             DrawHZText12(msg,0,(240-str_len*6)/2,160-30,0x7fff,1);
@@ -286,6 +289,7 @@ u8 str_len;
     }
 }
 //-----------------------------------------------------------
+//scan game number in nor
 u32 GetFileListFromNor(void)
 {
     REG_IME = 0 ;

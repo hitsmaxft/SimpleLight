@@ -2608,9 +2608,10 @@ re_showfile:
 					}
 					else if (MENU_line == 1) {
 						//delete last game
-						//TODO  only delete last game
 						if (show_offset + file_select + 1 == game_total_NOR) {
-							Block_Erase(gl_norOffset - pNorFS[show_offset + file_select].filesize);
+							// backup code
+							// Block_Erase(gl_norOffset - pNorFS[show_offset + file_select].filesize);
+							Block_Erase(gl_norOffset - pNorFS[game_total_NOR -1].filesize);
 						}
 						else {
 						//display message saying to delete last game first
