@@ -201,7 +201,7 @@ const char *zh_nor_op[4]={
 	"完整格式化",
 };
 
-const char *zh_more_options[5]={
+const char *zh_more_options[4]={
 	"切换缩略图",
 	"切换冷启动",
 	"切换备份",

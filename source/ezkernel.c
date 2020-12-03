@@ -894,7 +894,7 @@ void Show_Extra_Menu(u32 menu_select)
 	u16 name_color;
 	char msg[30];
 	u32 linemax;
-	linemax = 4;
+	linemax = 5;
 	for (line = 0; line < linemax; line++) {
 		if (line == menu_select) {
 			name_color = gl_color_selected;
@@ -2635,16 +2635,6 @@ re_showfile:
 					else if (MENU_line == 1) {
 						//delete last game
 						Block_Erase(gl_norOffset - pNorFS[game_total_NOR -1].filesize);
-
-						// if (show_offset + file_select + 1 == game_total_NOR) {
-						// 	Block_Erase(gl_norOffset - pNorFS[show_offset + file_select].filesize);
-						// }
-						// else {
-						// //display message saying to delete last game first
-						// 	DrawHZText12(gl_lastest_game, 0, 66, 88, gl_color_text, 1);
-						// 	DrawHZText12(gl_lastest_game2, 0, 66, 103, gl_color_text, 1);
-						// 	wait_btn();
-						// }
 						page_num = NOR_list;
 						goto refind_file;
 					}
