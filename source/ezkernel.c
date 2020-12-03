@@ -1319,7 +1319,7 @@ void CheckLanguage(void)
 	if (gl_select_lang == 0xE1E1) { //english
 		LoadEnglish();
 	}
-	else { //ÖÐÎÄ
+	else { //ï¿½ï¿½ï¿½ï¿½
 		LoadChinese();
 	}
 	//Modify credit string
@@ -2357,7 +2357,7 @@ re_showfile:
 							DrawHZText12("(ON)", 32, 60 + (6 * 12), 86, gl_color_text, 1);
 						else
 							DrawHZText12("(OFF)", 32, 60 + (6 * 12), 86, gl_color_text, 1);
-						if (MENU_line == 1 || MENU_line == 2 || MENU_line == 3) {
+						if (MENU_line == 1 || MENU_line == 2 || MENU_line == 3  || MENU_line == 4) {
 							name_color = gl_color_selected;
 						}
 						else {
