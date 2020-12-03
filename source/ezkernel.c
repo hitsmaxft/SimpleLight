@@ -824,7 +824,7 @@ void Show_MENU(u32 menu_select, PAGE_NUM page, u32 havecht, u32 Save_num, u32 is
 	u32 y_offset = 30;
 	u16 name_color;
 	char msg[30];
-	u32 linemax = (page == NOR_list) ? 3 : (5 + havecht);
+	u32 linemax = (page == NOR_list) ? 4 : (5 + havecht);
 	if (is_menu) {
 		linemax = 1;
 	}
@@ -2604,21 +2604,36 @@ re_showfile:
 			else if (keysdown & KEY_A) {
 				if (page_num == NOR_list) {
 					if (MENU_line == 0) { //boot to NOR.page
+						goto load_file;
 						break;
 					}
 					else if (MENU_line == 1) {
 						//delete last game
-						if (show_offset + file_select + 1 == game_total_NOR) {
-							// backup code
-							// Block_Erase(gl_norOffset - pNorFS[show_offset + file_select].filesize);
-							Block_Erase(gl_norOffset - pNorFS[game_total_NOR -1].filesize);
-						}
-						else {
-						//display message saying to delete last game first
-							DrawHZText12(gl_lastest_game, 0, 66, 88, gl_color_text, 1);
-							DrawHZText12(gl_lastest_game2, 0, 66, 103, gl_color_text, 1);
-							wait_btn();
-						}
+						Block_Erase(gl_norOffset - pNorFS[game_total_NOR -1].filesize);
+
+						// if (show_offset + file_select + 1 == game_total_NOR) {
+						// 	Block_Erase(gl_norOffset - pNorFS[show_offset + file_select].filesize);
+						// }
+						// else {
+						// //display message saying to delete last game first
+						// 	DrawHZText12(gl_lastest_game, 0, 66, 88, gl_color_text, 1);
+						// 	DrawHZText12(gl_lastest_game2, 0, 66, 103, gl_color_text, 1);
+						// 	wait_btn();
+						// }
+						page_num = NOR_list;
+						goto refind_file;
+					}
+					else if (MENU_line == 2) {
+						//delete last game
+						//Block_Erase(gl_norOffset - pNorFS[game_total_NOR -1].filesize);
+						//debug
+						char nor_msg[100];
+						sprintf(nor_msg, "DEBUG:delete to offset %lu", gl_norOffset - pNorFS[show_offset + file_select].filesize);
+						DrawHZText12(gl_lastest_game, 0, 66, 88, gl_color_text, 1);
+						DrawHZText12(nor_msg, 0, 66, 103, gl_color_text, 1);
+						wait_btn();
+						//debug
+
 						page_num = NOR_list;
 						goto refind_file;
 					}

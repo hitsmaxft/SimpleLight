@@ -194,10 +194,11 @@ const char *zh_rom_menu[]={
 	"存档类型",
 	"金手指",
 };
-const char *zh_nor_op[3]={
+const char *zh_nor_op[4]={
 	"直接运行",
 	"删除最后一个",
-	"全部格式化",
+	"快速清空",
+	"完整格式化",
 };
 
 const char *zh_more_options[4]={
@@ -299,9 +300,10 @@ const char *en_rom_menu[] = {
 	"Save type",
 	"Cheat",
 };
-const char *en_nor_op[3]={
+const char *en_nor_op[4]={
 	"Direct boot",
 	"Delete last",
+	"Delete all",
 	"Format all",
 };	
 const char *en_more_options[4]={
