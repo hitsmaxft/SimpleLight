@@ -124,9 +124,10 @@ u16 gl_engine_sel;
 
 u16 gl_show_Thumbnail;
 u16 gl_toggle_reset;
+u16 gl_ingame_RTC_open_status;
 u16 gl_toggle_backup;
 u16 gl_toggle_bold;
-u16 gl_ingame_RTC_open_status;
+u16 gl_toggle_multisav;
 
 
 u8 __attribute__((aligned(4)))GAMECODE[4];
@@ -1361,6 +1362,10 @@ void CheckSwitch(void)
 	if ((gl_show_Thumbnail != 0x0) && (gl_show_Thumbnail != 0x1)) {
 		gl_show_Thumbnail = 0x0;
 	}
+	gl_ingame_RTC_open_status = Read_SET_info(13);
+	if ((gl_ingame_RTC_open_status != 0x0) && (gl_ingame_RTC_open_status != 0x1)) {
+		gl_ingame_RTC_open_status = 0x1;
+	}
 	gl_toggle_reset = Read_SET_info(14);
 	if ((gl_toggle_reset != 0x0) && (gl_toggle_reset != 0x1)) {
 		gl_toggle_reset = 0x0;
@@ -1373,9 +1378,9 @@ void CheckSwitch(void)
 	if ((gl_toggle_bold != 0x0) && (gl_toggle_bold != 0x1)) {
 		gl_toggle_bold = 0x0;
 	}
-	gl_ingame_RTC_open_status = Read_SET_info(13);
-	if ((gl_ingame_RTC_open_status != 0x0) && (gl_ingame_RTC_open_status != 0x1)) {
-		gl_ingame_RTC_open_status = 0x1;
+	gl_toggle_multisav = Read_SET_info(17);
+	if ((gl_toggle_multisav != 0x0) && (gl_toggle_multisav != 0x1)) {
+		gl_toggle_multisav = 0x0;
 	}
 }
 //---------------------------------------------------------------------------------
@@ -1638,6 +1643,7 @@ void save_set_info_SELECT(void)
 	SET_info_buffer[14] = gl_toggle_reset;
 	SET_info_buffer[15] = gl_toggle_backup;
 	SET_info_buffer[16] = gl_toggle_bold;
+	SET_info_buffer[17] = gl_toggle_multisav;
 	//save to nor
 	Save_SET_info(SET_info_buffer, 0x200);
 }
@@ -1948,6 +1954,7 @@ int main(void)
 	gl_toggle_reset = Read_SET_info(14);
 	gl_toggle_backup = Read_SET_info(15);
 	gl_toggle_bold = Read_SET_info(16);
+	gl_toggle_multisav = Read_SET_info(17);
 	gl_currentpage = 0x8002;//kernel mode
 	SetMode(MODE_3 | BG2_ENABLE);
 	SD_Disable();
@@ -2327,7 +2334,7 @@ re_showfile:
 				Show_MENU_btn();
 				u8 MENU_line = 0;
 				u8 re_menu = 1;
-				u8 MENU_max = 3;
+				u8 MENU_max = 4;
 				u16 name_color = 0;
 				while (1)
 				{
@@ -2346,6 +2353,10 @@ re_showfile:
 							DrawHZText12("(ON)", 32, 60 + (6 * 12), 72, gl_color_text, 1);
 						else
 							DrawHZText12("(OFF)", 32, 60 + (6 * 12), 72, gl_color_text, 1);
+						if (gl_toggle_multisav)
+							DrawHZText12("(ON)", 32, 60 + (6 * 12), 86, gl_color_text, 1);
+						else
+							DrawHZText12("(OFF)", 32, 60 + (6 * 12), 86, gl_color_text, 1);
 						if (MENU_line == 1 || MENU_line == 2 || MENU_line == 3) {
 							name_color = gl_color_selected;
 						}
@@ -2372,6 +2383,13 @@ re_showfile:
 								DrawHZText12("(ON)", 32, 60 + (6 * 12), 72, name_color, 1);
 							else
 								DrawHZText12("(OFF)", 32, 60 + (6 * 12), 72, name_color, 1);
+						}
+						if (MENU_line == 4)
+						{
+							if (gl_toggle_multisav)
+								DrawHZText12("(ON)", 32, 60 + (6 * 12), 86, name_color, 1);
+							else
+								DrawHZText12("(OFF)", 32, 60 + (6 * 12), 86, name_color, 1);
 						}
 						re_menu = 0;
 					}
@@ -2427,6 +2445,13 @@ re_showfile:
 						}
 						else if (MENU_line == 3) {
 							gl_toggle_bold = !gl_toggle_bold;
+							save_set_info_SELECT();
+							updata = 1;
+							Refresh_filename(show_offset, file_select, updata, gl_show_Thumbnail && is_GBA);
+							goto refind_file;
+						}
+						else if (MENU_line == 4) {
+							gl_toggle_multisav = !gl_toggle_multisav;
 							save_set_info_SELECT();
 							updata = 1;
 							Refresh_filename(show_offset, file_select, updata, gl_show_Thumbnail && is_GBA);
@@ -2625,14 +2650,7 @@ re_showfile:
 					}
 					else if (MENU_line == 2) {
 						//delete last game
-						//Block_Erase(gl_norOffset - pNorFS[game_total_NOR -1].filesize);
-						//debug
-						char nor_msg[100];
-						sprintf(nor_msg, "DEBUG:delete to offset %lu", gl_norOffset - pNorFS[show_offset + file_select].filesize);
-						DrawHZText12(gl_lastest_game, 0, 66, 88, gl_color_text, 1);
-						DrawHZText12(nor_msg, 0, 66, 103, gl_color_text, 1);
-						wait_btn();
-						//debug
+						Block_Erase(0);
 
 						page_num = NOR_list;
 						goto refind_file;
@@ -2712,8 +2730,13 @@ re_showfile:
 			saveext = savfilename + strlen(savfilename);
 		if ((is_EMU) && (is_EMU < 9))
 			sprintf(saveext, ".esv");
-		else
-			sprintf(saveext, ".sav");
+		else {
+			if (gl_toggle_multisav) {
+				sprintf(saveext, ".savs");
+			} else {
+				sprintf(saveext, ".sav");
+			}
+		}
 #ifdef DEBUG
 		//DEBUG_printf("sav %s",savfilename);
 #endif
