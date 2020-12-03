@@ -205,6 +205,7 @@ void Show_help_window()
 	DrawHZText12(gl_online_manual, 0, 240 - 70 - 10, 74, gl_color_text, 1);
 	DrawHZText12(credit_line_1, 0, 4, 105, gl_color_selected, 1);
 	DrawHZText12(gl_theme_credit2, 0, 4, 120, gl_color_selected, 1);
+	DrawHZText12("hits' test ver.", 0, 4, 135, gl_color_selected, 1);
 	DrawHZText12("K:1.06 F:7", 0, 4, 143, gl_color_text, 1);
 	while (1) {
 		VBlankIntrWait();
@@ -1282,7 +1283,7 @@ u32 IWRAM_CODE Loadfile2PSRAM(TCHAR* filename)
 		ShowbootProgress(gl_copying_data);
 		f_lseek(&gfile, 0x0000);
 		for (blocknum = 0x0000; blocknum < filesize; blocknum += 0x20000) {
-			sprintf(msg, "%luMb", (blocknum) / 0x20000);
+			sprintf(msg, "%luMb/%luMb", (blocknum) / 0x20000, (filesize) / 0x20000);
 			str_len = strlen(msg);
 			Clear(0, 130, 240, 15, gl_color_cheat_black, 1);
 			DrawHZText12(msg, 0, (240 - str_len * 6) / 2, 160 - 30, 0x7fff, 1);
@@ -2354,9 +2355,9 @@ re_showfile:
 						else
 							DrawHZText12("(OFF)", 32, 60 + (6 * 12), 72, gl_color_text, 1);
 						if (gl_toggle_multisav)
-							DrawHZText12("(ON)", 32, 60 + (6 * 12), 86, gl_color_text, 1);
+							DrawHZText12("(ON)", 32, 60 + (6 * 14), 86, gl_color_text, 1);
 						else
-							DrawHZText12("(OFF)", 32, 60 + (6 * 12), 86, gl_color_text, 1);
+							DrawHZText12("(OFF)", 32, 60 + (6 * 14), 86, gl_color_text, 1);
 						if (MENU_line == 1 || MENU_line == 2 || MENU_line == 3  || MENU_line == 4) {
 							name_color = gl_color_selected;
 						}
@@ -2387,9 +2388,9 @@ re_showfile:
 						if (MENU_line == 4)
 						{
 							if (gl_toggle_multisav)
-								DrawHZText12("(ON)", 32, 60 + (6 * 12), 86, name_color, 1);
+								DrawHZText12("(ON)", 32, 60 + (6 * 14), 86, name_color, 1);
 							else
-								DrawHZText12("(OFF)", 32, 60 + (6 * 12), 86, name_color, 1);
+								DrawHZText12("(OFF)", 32, 60 + (6 * 14), 86, name_color, 1);
 						}
 						re_menu = 0;
 					}
@@ -2722,7 +2723,7 @@ re_showfile:
 			sprintf(saveext, ".esv");
 		else {
 			if (gl_toggle_multisav) {
-				sprintf(saveext, ".savs");
+				sprintf(saveext, ".scv");
 			} else {
 				sprintf(saveext, ".sav");
 			}

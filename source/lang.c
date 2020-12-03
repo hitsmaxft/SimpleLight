@@ -140,7 +140,7 @@ const char zh_ok_btn[]="保存";
 const char zh_formatnor_info[]="确定?大约4分钟";
 
 const char zh_theme_credit[]="Simple主题";
-const char zh_theme_credit2[]="by Sterophonick";
+const char zh_theme_credit2[]="by Sterophonick; hits' mod";
 
 const char zh_check_sav[]="检查SAV文件";
 const char zh_make_sav[]="创建SAV文件";
@@ -201,7 +201,7 @@ const char *zh_nor_op[4]={
 	"完整格式化",
 };
 
-const char *zh_more_options[4]={
+const char *zh_more_options[5]={
 	"切换缩略图",
 	"切换冷启动",
 	"切换备份",
