@@ -1518,8 +1518,6 @@ void IWRAM_CODE make_pogoshell_arguments(TCHAR* cmdname, TCHAR* filename, u32 cm
 }
 
 
-
-//---------------------------------------------------------------
 u32 IWRAM_CODE LoadEMU2PSRAM(TCHAR* filename, u32 is_EMU)
 {
 	u8 str_len;
@@ -1555,7 +1553,7 @@ u32 IWRAM_CODE LoadEMU2PSRAM(TCHAR* filename, u32 is_EMU)
 		ShowbootProgress(gl_generating_emu);
 		for (blocknum = 0x0000; blocknum < filesize; blocknum += 0x20000)
 		{
-			sprintf(msg, "%luMb", (blocknum + blockoffset) / 0x20000);
+			sprintf(msg, "%luMb/%luMb", (blocknum + blockoffset) / 0x20000, (filesize)/0x20000);
 			str_len = strlen(msg);
 			Clear(0, 130, 240, 15, gl_color_cheat_black, 1);
 			DrawHZText12(msg, 0, (240 - str_len * 6) / 2, 160 - 30, 0x7fff, 1);
@@ -2864,7 +2862,29 @@ re_showfile:
 			//DEBUG_printf(" %08X %08X ", FAT_table_buffer[0x1F0/4],FAT_table_buffer[0x1F4/4]);
 			//DEBUG_printf(" %08X %08X ", FAT_table_buffer[0x1F8/4],FAT_table_buffer[0x1FC/4]);
 		}
-		if (is_EMU) {
+		if ((is_EMU == 1|| is_EMU == 2) & gl_toggle_multisav) {
+			//debug , emu copy to nor
+			ShowbootProgress(gl_generating_emu);
+			f_chdir(currentpath);//return to game folder
+			//copy file
+			res = LoadGBx2NOR(
+				(void *)goomba_gba, goomba_gba_size, pfilename, gl_norOffset, 0x0);
+
+			DrawHZText12("press B!", 0, (240 - (9 * 6)) / 2, 86, gl_color_NORFULL, 1);
+			wait_btn();
+
+			if (res == 0)
+			{
+				page_num = NOR_list;
+				goto refind_file;
+			}
+			else if (res == 2)
+			{
+				DrawHZText12("NOR Full!", 0, (240 - (9 * 6)) / 2, 86, gl_color_NORFULL, 1);
+				wait_btn();
+				goto refind_file;
+			}
+		} else if (is_EMU) {
 			ShowbootProgress(gl_generating_emu);
 			f_chdir(currentpath);//return to game folder
 			FAT_table_buffer[0x1F4 / 4] = 0x2;  	//copy mode

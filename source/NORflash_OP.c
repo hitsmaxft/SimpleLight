@@ -248,7 +248,6 @@ u8 str_len;
         Clear(0,160-15,240,15,gl_color_cheat_black,1);
         ShowbootProgress(gl_copying_data);
 
-
         for(blocknum=0; blocknum<filesize; blocknum+=0x20000) {
             //show file size process
             sprintf(msg,"%luMb/%luMb",(blocknum)/0x20000, (filesize)/0x20000);
@@ -288,6 +287,136 @@ u8 str_len;
         return 1;
     }
 }
+
+//-----------------------------------------------------------
+//TODO load gb/gbc into norflash
+u32 LoadGBx2NOR(void *launcher_size_bin, long launcher_size, TCHAR *filename, u32 NORaddress,u32 have_patch)
+{
+u8 str_len;
+    u32 res;
+    u32 ret;
+    u32 filesize;
+    u32 fileneedsize;
+    u32 blocknum;
+    char msg[128];
+    FM_NOR_FS tmpNorFS ;
+    char temp[50];
+    u16 readdata;
+    u32 add_patch = 0;
+    u16 norid = Read_S98NOR_ID();
+
+    if(norid == 0x223D) { //S98
+        res = f_open(&gfile, filename, FA_READ);
+        if(res != FR_OK) {
+            return 0;
+        }
+
+        filesize = f_size(&gfile);
+        f_lseek(&gfile, 0xa0);
+        f_read(&gfile, temp, 0x10, (u32 *)&ret);//read game name
+        memcpy(tmpNorFS.gamename,temp,0x10);
+
+
+        tmpNorFS.rompage = NORaddress >> 17;
+
+        //combine emulator size
+        fileneedsize = ((((filesize+ launcher_size +0x1FFFF)/0x20000)*0x20000));
+
+        if(have_patch) {
+            if(iTrimSize>=fileneedsize) {
+                fileneedsize = fileneedsize+0x20000;
+                add_patch = 1;
+            }
+        }
+        if(	fileneedsize > (0x4000000-NORaddress)) {
+            return 2; //Not enough NOR space
+        }
+        ////////////////// erase all BBP
+        *((vu16 *)(FlashBase_S98)) = 0xF0 ;
+        *((vu16 *)(FlashBase_S98+0x555*2)) = 0xAA ;
+        *((vu16 *)(FlashBase_S98+0x2AA*2)) = 0x55 ;
+        *((vu16 *)(FlashBase_S98+0x555*2)) = 0xC0 ;
+        *((vu16 *)(FlashBase_S98+0x000*2)) = 0x80 ;
+        *((vu16 *)(FlashBase_S98+0x000*2)) = 0x30 ;
+        {
+            int polling_counter = 0x15000;
+            u32 v1;
+            do {
+                v1 = *((vu16 *)(FlashBase_S98+ 0x5C0000));
+                polling_counter--;
+            }
+            while (polling_counter);
+        }
+        *((vu16 *)(FlashBase_S98+0x000*2)) = 0x90 ;
+        *((vu16 *)(FlashBase_S98+0x000*2)) = 0x00 ;
+        /////////////////
+        tmpNorFS.filesize = fileneedsize;
+        tmpNorFS.have_patch = have_patch;
+        //tmpNorFS.have_RTS = gl_rts_on;
+        tmpNorFS.have_RTS = false;
+        sprintf(tmpNorFS.filename,"%s",filename);
+
+        DEBUG_printf("file name %s" , filename );
+        DEBUG_printf("game code [%c]" , tmpNorFS.gamename );
+        DEBUG_printf("rom size=%luMb" , (filesize)/0x20000 );
+        DEBUG_printf("used space=%luMb" , (tmpNorFS.filesize)/0x20000 );
+        DEBUG_printf("game in nor=%d" , game_total_NOR );
+
+        //save file meta
+        dmaCopy(&tmpNorFS,&pNorFS[game_total_NOR], sizeof(FM_NOR_FS));
+        Clear(0,160-15,240,15,gl_color_cheat_black,1);
+
+        //generate emu into flash
+        ShowbootProgress(gl_generating_emu);
+
+        //copy file
+        Block_Erase(NORaddress);
+		dmaCopy((void*)launcher_size_bin, pReadCache, launcher_size);
+        WriteFlash_with32word(NORaddress, pReadCache, launcher_size);
+
+        //start copy data
+        ShowbootProgress(gl_copying_data);
+
+        for(blocknum=0; blocknum<filesize; blocknum+=0x20000) {
+            //show file size process
+            sprintf(msg,"%luMb/%luMb",(blocknum)/0x20000, (filesize)/0x20000);
+			str_len = strlen(msg);
+            Clear(0,130,240,15,gl_color_cheat_black,1);
+            DrawHZText12(msg,0,(240-str_len*6)/2,160-30,0x7fff,1);
+            Block_Erase(blocknum+NORaddress + launcher_size);
+            f_lseek(&gfile, blocknum);
+            f_read(&gfile, pReadCache, 0x20000, (u32 *)&ret);//pReadCache max 0x20000 Byte
+            if(have_patch) {
+                if((gl_reset_on==1) || (gl_rts_on==1) || (gl_sleep_on==1) || (gl_cheat_on==1)) {
+                    PatchInternal((u32*)pReadCache,0x20000,blocknum);
+                    GBApatch_NOR((u32*)pReadCache,0x20000,blocknum);//some nes need check
+                }
+            }
+            else {
+                GBApatch_Cleanrom_NOR((u32*)pReadCache,blocknum);
+            }
+            WriteFlash_with32word(blocknum+NORaddress+launcher_size,pReadCache,0x20000);
+            //WriteFlash(blocknum+NORaddress,pReadCache,0x20000);
+        }
+        f_close(&gfile);
+        if(have_patch) {
+            if(add_patch) {
+                Block_Erase(blocknum+NORaddress+launcher_size);
+                GBApatch_NOR((u32*)pReadCache,0x20000,blocknum);
+                WriteFlash_with32word(blocknum+NORaddress + launcher_size,pReadCache,0x20000);
+            }
+        }
+        Save_NOR_info(pNorFS,sizeof(FM_NOR_FS)*0x40);
+        return 0;
+    }
+    else {
+#ifdef DEBUG
+        //DEBUG_printf("Bad NOR ID");
+#endif
+        return 1;
+    }
+}
+
 //-----------------------------------------------------------
 //scan game number in nor
 u32 GetFileListFromNor(void)

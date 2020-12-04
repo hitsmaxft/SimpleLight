@@ -10,3 +10,4 @@ void WriteFlash(u32 address,u8 *buffer,u32 size);
 void IWRAM_CODE WriteFlash_with32word(u32 address,u8 *buffer,u32 size);
 u32 Loadfile2NOR(TCHAR *filename, u32 NORaddress,u32 have_patch);
 u32 GetFileListFromNor(void);
+u32 LoadGBx2NOR(void *launcher_size_bin,long launcher_size,  TCHAR *filename, u32 NORaddress,u32 have_patch);
