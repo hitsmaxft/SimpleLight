@@ -2862,9 +2862,10 @@ re_showfile:
 			//DEBUG_printf(" %08X %08X ", FAT_table_buffer[0x1F0/4],FAT_table_buffer[0x1F4/4]);
 			//DEBUG_printf(" %08X %08X ", FAT_table_buffer[0x1F8/4],FAT_table_buffer[0x1FC/4]);
 		}
+
 		if ((is_EMU == 1|| is_EMU == 2) && gl_toggle_multisav) {
-			//debug , emu copy to nor
-			ShowbootProgress(gl_generating_emu);
+			//FIXME, copy emu to nor
+			ShowbootProgress("copy debug emu into nor");
 			f_chdir(currentpath);//return to game folder
 			//copy file
 			res = LoadGBx2NOR(
