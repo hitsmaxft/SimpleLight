@@ -122,6 +122,10 @@ u32 gl_norOffset;
 u16 gl_select_lang;
 u16 gl_engine_sel;
 
+// hits add  for cache norflash update
+u8 gl_norFileSizeCacheDirty;
+u32 gl_norFileSize;
+
 u16 gl_show_Thumbnail;
 u16 gl_toggle_reset;
 u16 gl_ingame_RTC_open_status;
@@ -2633,14 +2637,20 @@ re_showfile:
 					}
 					else if (MENU_line == 1) {
 						//delete last game
+						//why just break file
+						//break last file content
 						Block_Erase(gl_norOffset - pNorFS[game_total_NOR -1].filesize);
 						page_num = NOR_list;
 						goto refind_file;
 					}
 					else if (MENU_line == 2) {
-						//delete last game
-						Block_Erase(0);
+						//fast delete all files
+						//todo first format pNorFs
 
+						//clear up
+						memset(pNorFS, 00, sizeof(FM_NOR_FS) * MAX_NOR);
+						//save to nroflash
+						Save_NOR_info(pNorFS, sizeof(FM_NOR_FS) * MAX_NOR);
 						page_num = NOR_list;
 						goto refind_file;
 					}

@@ -45,8 +45,10 @@ typedef struct FM_NOR_FILE_SECT{////save to nor
 	unsigned char filename[100];	
 	u16 rompage ;
 	u16 have_patch ;
-	u16	have_RTS;
-	u16 reserved;
+	u8  mod_confg; // share with have_RTS , very safe.
+	u8	have_RTS;
+	u32 reserved;
+
 	u32 filesize;
 	u32 reserved2 ;
 	char gamename[0x10];

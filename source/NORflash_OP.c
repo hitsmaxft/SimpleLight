@@ -20,6 +20,11 @@ extern u32 gl_norOffset;
 extern FIL gfile;
 extern u32 game_total_NOR;
 extern u32 iTrimSize;
+
+//cache file list
+extern u8 gl_norFileSizeCacheDirty;
+extern u32 gl_norFileSize;
+
 //---------------------------------------------------------------
 void Chip_Reset()
 {
@@ -107,6 +112,8 @@ void Chip_Erase()
 //-----------------------------------------------------------
 void FormatNor()
 {
+    markFileListDirtyMark();
+
     char msg[128];
     sprintf(msg,"%s",gl_formatnor_info1);
     DrawHZText12(gl_formatnor_info1,0,60,85,gl_color_text,1);
@@ -202,6 +209,8 @@ u8 str_len;
     u32 add_patch = 0;
     u16 norid = Read_S98NOR_ID();
     if(norid == 0x223D) { //S98
+        markFileListDirtyMark();
+
         res = f_open(&gfile, filename, FA_READ);
         if(res != FR_OK) {
             return 0;
@@ -297,6 +306,7 @@ u8 str_len;
     u32 ret;
     u32 filesize;
     u32 fileneedsize;
+    u32 launcher_space;
     u32 blocknum;
     char msg[128];
     FM_NOR_FS tmpNorFS ;
@@ -306,6 +316,7 @@ u8 str_len;
     u16 norid = Read_S98NOR_ID();
 
     if(norid == 0x223D) { //S98
+        markFileListDirtyMark();
         res = f_open(&gfile, filename, FA_READ);
         if(res != FR_OK) {
             return 0;
@@ -321,6 +332,7 @@ u8 str_len;
 
         //combine emulator size
         fileneedsize = ((((filesize+ launcher_size +0x1FFFF)/0x20000)*0x20000));
+        launcher_space = ((((launcher_size +0x1FFFF)/0x20000)*0x20000));
 
         if(have_patch) {
             if(iTrimSize>=fileneedsize) {
@@ -369,7 +381,7 @@ u8 str_len;
         //generate emu into flash
         ShowbootProgress(gl_generating_emu);
 
-        //copy file
+        //FIXME erase enough space
         Block_Erase(NORaddress);
 		dmaCopy((void*)launcher_size_bin, pReadCache, launcher_size);
         WriteFlash_with32word(NORaddress, pReadCache, launcher_size);
@@ -418,7 +430,7 @@ u8 str_len;
 }
 
 //-----------------------------------------------------------
-//scan game number in nor
+//Update File list from norflash
 u32 GetFileListFromNor(void)
 {
     REG_IME = 0 ;
@@ -468,3 +480,39 @@ u32 GetFileListFromNor(void)
     return count ;
 }
 //-----------------------------------------------------------
+void markFileListDirtyMark() 
+{
+    gl_norFileSizeCacheDirty = 1;
+}
+
+u32 GetFileListFromNorCached(void)
+{
+    u32 game_size;
+    if (gl_norFileSizeCacheDirty == 1 ) {
+        game_size = GetFileListFromNor();
+        gl_norFileSizeCacheDirty = 0; // clear dirty mark
+        //store file size
+        gl_norFileSize = game_size;
+    } else {
+        game_size = gl_norFileSize;
+
+    }
+    return game_size;
+}
+
+//word  = 15  2^4 - 1 = 1000 - 1  = 111o
+//3*4+2 = 14
+
+//reprograming norflash by block , auto padding 
+void IWRAM_CODE WriteFlashBy32WordPadding(u32 address, u8 *buffer, u32 size)
+{
+    //erase target
+    u32 blockCount;
+    //with word
+    //  padding size by block size
+    blockCount = ((((size + 0x1FFFF) / 0x20000) * 0x20000));
+    for (int i =0 ; i< blockCount ; i ++) {
+        Block_Erase(address);
+    }
+    WriteFlash_with32word(address, buffer, size);
+}
