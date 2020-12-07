@@ -132,6 +132,7 @@ u16 gl_ingame_RTC_open_status;
 u16 gl_toggle_backup;
 u16 gl_toggle_bold;
 u16 gl_toggle_multisav;
+u16 gl_toggle_mode_config;
 
 
 u8 __attribute__((aligned(4)))GAMECODE[4];
@@ -1096,6 +1097,8 @@ void init_FAT_table(void)
 	FAT_table_buffer[2] = 0xFFFFFFFF;
 }
 //---------------------------------------------------------------------------------
+//filename: rom path on fat
+//game_save_rts:  1: game ; 2:save
 u32 Check_game_save_FAT(TCHAR* filename, u32 game_save_rts)
 {
 	u32 res;
@@ -1252,6 +1255,7 @@ u32 SavefileWrite(TCHAR* filename, u32 savesize)
 	}
 }
 //---------------------------------------------------------------
+//find game save mode by gamecode->savemode mapping table
 u8 Check_saveMODE(u8 gamecode[])
 {
 	u32 i;
@@ -1286,8 +1290,10 @@ u32 IWRAM_CODE Loadfile2PSRAM(TCHAR* filename)
 		Clear(0, 160 - 15, 240, 15, gl_color_cheat_black, 1);
 		ShowbootProgress(gl_copying_data);
 		f_lseek(&gfile, 0x0000);
+
+		//proces file by block , blocksize=2^17B =128KB
 		for (blocknum = 0x0000; blocknum < filesize; blocknum += 0x20000) {
-			sprintf(msg, "%luMb/%luMb", (blocknum) / 0x20000, (filesize) / 0x20000);
+			sprintf(msg, "%luMbit/%luMbit", (blocknum) / 0x20000, (filesize) / 0x20000);
 			str_len = strlen(msg);
 			Clear(0, 130, 240, 15, gl_color_cheat_black, 1);
 			DrawHZText12(msg, 0, (240 - str_len * 6) / 2, 160 - 30, 0x7fff, 1);
@@ -1298,9 +1304,11 @@ u32 IWRAM_CODE Loadfile2PSRAM(TCHAR* filename)
 			Address = blocknum;
 			while (Address >= 0x800000) {
 				Address -= 0x800000;
+				//page per 4K
 				page += 0x1000;
 			}
 			SetPSRampage(page);
+			//copy block to PSRAM addres
 			dmaCopy((void*)pReadCache, PSRAMBase_S98 + Address, 0x20000);
 			page = 0;
 		}
@@ -1383,7 +1391,9 @@ void CheckSwitch(void)
 	if ((gl_toggle_bold != 0x0) && (gl_toggle_bold != 0x1)) {
 		gl_toggle_bold = 0x0;
 	}
-	gl_toggle_multisav = Read_SET_info(17);
+
+	//gl_toggle_mode_config = Read_Mode_info();
+	
 	if ((gl_toggle_multisav != 0x0) && (gl_toggle_multisav != 0x1)) {
 		gl_toggle_multisav = 0x0;
 	}
@@ -1953,18 +1963,19 @@ int main(void)
 	u32 shift;
 	u32 short_filename = 0;
 	u8 error_num;
-	gl_show_Thumbnail = Read_SET_info(12);
-	gl_toggle_reset = Read_SET_info(14);
-	gl_toggle_backup = Read_SET_info(15);
-	gl_toggle_bold = Read_SET_info(16);
-	gl_toggle_multisav = Read_SET_info(17);
+
+	//init global switches
+	CheckSwitch();
+
 	gl_currentpage = 0x8002;//kernel mode
 	SetMode(MODE_3 | BG2_ENABLE);
 	SD_Disable();
-	Set_RTC_status(1);
+	//config rtc status
+	Set_RTC_status(gl_ingame_RTC_open_status);
 	//check FW
 	u16 Built_in_ver = 7;   //Newest_FW_ver
 	u16 Current_FW_ver = Read_FPGA_ver();
+	//# check fw version in current kernerl
 	if ((Current_FW_ver < Built_in_ver) || (Current_FW_ver == 99)) { //99 is test ver
 		Check_FW_update(Current_FW_ver, Built_in_ver);
 	}
@@ -1972,7 +1983,10 @@ int main(void)
 	//REG_BLDY = 0x0010;
 	DrawPic((u16*)gImage_splash, 0, 0, 240, 160, 0, 0, 1);
 	CheckLanguage();
+
+	//check switch again ??
 	CheckSwitch();
+
 	u8 i;
 	/*
 	for(i = 16; i > 0; i--) {
@@ -2703,6 +2717,7 @@ re_showfile:
 			else {
 				memset(GAMECODE, 'F', 4);
 			}
+			//>32Mbit ??
 			if (gamefilesize > 0x2000000) {
 				ShowbootProgress(gl_file_overflow);
 				wait_btn();
@@ -2723,6 +2738,7 @@ re_showfile:
 			memcpy(GAMECODE, &pNorFS[show_offset + file_select].gamename[0xC], 4);
 		}
 		ShowbootProgress(gl_check_sav);
+		// savfilename=pfilename(__.gba__).save
 		memcpy(savfilename, pfilename, 100);
 		TCHAR* saveext = strrchr(savfilename, '.');
 		if (saveext == NULL)
@@ -2741,6 +2757,7 @@ re_showfile:
 #endif
 		if (!is_EMU) { //gba
 			if (old_Save_num != Save_num) {
+				//record  rom save type (auto/auto/etc...) in a .mde file
 				Make_mde_file(pfilename, Save_num);
 			}
 		}
@@ -2827,10 +2844,14 @@ re_showfile:
 		if (res == FR_OK) { //have a old save file
 			savefilesize = f_size(&gfile);
 			f_close(&gfile);
-			if (gl_toggle_backup)
+			if (gl_toggle_backup) {
+				//FEATURE
+				//simple light's addition backup feature
 				Backup_savefile(savfilename);
+			}
 		}
 		else { //make a new one
+			//create new save file
 			//new_save:
 			ShowbootProgress(gl_make_sav);
 			res = SavefileWrite(savfilename, savefilesize);
@@ -2873,8 +2894,9 @@ re_showfile:
 			//DEBUG_printf(" %08X %08X ", FAT_table_buffer[0x1F8/4],FAT_table_buffer[0x1FC/4]);
 		}
 
-		if ((is_EMU == 1|| is_EMU == 2) && gl_toggle_multisav) {
-			//FIXME, copy emu to nor
+		//FIXME just disable , on development
+		if ( 0 && (is_EMU == 1|| is_EMU == 2) && gl_toggle_multisav) {
+			//use multisave for emu2nor switch
 			ShowbootProgress("copy debug emu into nor");
 			f_chdir(currentpath);//return to game folder
 			//copy file
@@ -2920,6 +2942,14 @@ re_showfile:
 					goto re_showfile;
 				}
 			}
+			char temp_msg[100];
+			sprintf(temp_msg, "addons: %s%s%s",
+					gl_rts_on ? "rts " : "",
+					gl_reset_on ? "reset " : "",
+					gl_sleep_on ? "sleep " : "");
+			ShowbootProgress(temp_msg);
+
+
 			FAT_table_buffer[0x1F4 / 4] = 0x2;  //copy mode
 			Send_FATbuffer(FAT_table_buffer, 1); //only save FAT
 			//wait_btn();
@@ -2952,36 +2982,47 @@ re_showfile:
 					}
 				}
 				ShowbootProgress(gl_check_pat);
+				//check and load patch file
 				have_pat = Check_pat(pfilename);
 				f_chdir(currentpath);//return to game folder
 				ShowbootProgress(gl_copying_data);
-				u32 make_pat = 0;
+				u32 make_pat = 0; //condition of create new patch file
 				if (have_pat == 1) {
+					//find patch file created
+					//mark load rom
 					Send_FATbuffer(FAT_table_buffer, 0);//Loading rom
 				}
 				else { //(have_pat==0)
+
+					//save patch file
 					//get the location of the patch
 					res = f_open(&gfile, pfilename, FA_READ);
 					f_lseek(&gfile, (gamefilesize - 1) & 0xFFFE0000);
 					f_read(&gfile, pReadCache, 0x20000, &ret);
 					f_close(&gfile);
 					SetTrimSize(pReadCache, gamefilesize, 0x20000, 0x0, saveMODE);
+					//disable patch engine for chinese user who don't use clean rom
+					//disable patch engine is disabled
 					if ((gl_engine_sel == 0) || (gl_select_lang == 0xE2E2)) {
 						FAT_table_buffer[0x1F4 / 4] = 0x2;  // copy mode
 						Send_FATbuffer(FAT_table_buffer, 1); //only save FAT
+						//# PSRAM load game file
 						res = Loadfile2PSRAM(pfilename);
 						make_pat = 1;
 					}
 					else {
+						//load clean rom
 						use_internal_engine(GAMECODE);
 						Send_FATbuffer(FAT_table_buffer, 0);//Loading rom
 					}
 				}
+
+				//patch game rom in psram
 				if ((gl_reset_on == 1) || (gl_rts_on == 1) || (gl_sleep_on == 1) || (gl_cheat_on == 1)) {
 					Patch_SpecialROM_sleepmode();//
 					GBApatch_PSRAM(PSRAMBase_S98, gamefilesize);
 				}
-				//
+
 				if (make_pat == 1) {
 					ShowbootProgress(gl_make_pat);
 					Make_pat_file(pfilename);

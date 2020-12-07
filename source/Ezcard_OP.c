@@ -28,6 +28,10 @@ extern FIL gfile;
 #define SET_info_offset 0x7B0000
 
 
+#define MOD_SET_INDEX 64
+
+#define MOD_SET_AUTOBOOT 0x0001
+
 // --------------------------------------------------------------------
 void IWRAM_CODE SetSDControl(u16  control)
 {
@@ -200,6 +204,7 @@ void IWRAM_CODE SetRampage(u16 page)
 }
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
+// mode: 0:loading rom ; 1:only save FAT
 void IWRAM_CODE Send_FATbuffer(u32*buffer,u32 mode)
 {
     SetbufferControl(1);
@@ -251,13 +256,7 @@ void IWRAM_CODE SetRompageWithHardReset(u16 page,u32 bootmode)
 	REG_IME=0;
 	REG_SOUNDBIAS=0x0200;
 
-	if(bootmode==1) {
-		if(key_L)
-			SoftReset_now(0,0xff);
-		else
-			HardReset();
-		
-	} else if (bootmode==2 || bootmode==4 || bootmode==5) {
+	if (bootmode==2 || bootmode==4 || bootmode==5) {
 		int i;
 		//Clear exram up to pogoshell arg
 		u32 *p = (u32*)(0x02000000);
@@ -292,6 +291,7 @@ void IWRAM_CODE SetRompageWithHardReset(u16 page,u32 bootmode)
 		SoftReset_now(0,0xfe);
 	}
 	else {
+        //default and mode == 1
 		if(key_L)
 			HardReset();
 		else

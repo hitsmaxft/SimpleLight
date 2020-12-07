@@ -720,6 +720,7 @@ u32 Check_pat(TCHAR* gamefilename)
 		
 		if(res == FR_OK)//have a old file
 		{
+			// read previous file
 			patfilesize = f_size(&gfile);
 			f_read(&gfile, pReadCache, patfilesize, &ret);
 			f_close(&gfile);
@@ -772,6 +773,7 @@ void Make_pat_file(TCHAR* gamefilename)
 		res = f_open(&gfile,patnamebuf, FA_WRITE | FA_OPEN_ALWAYS);
 		if(res == FR_OK)
 		{	
+			//write patchInfo into file
 			f_lseek(&gfile, 0x0000);
 			res=f_write(&gfile, (void*)iPatchInfo2, sizeof(iPatchInfo2), &written);
 			w_buffer[0] = is_NORpatch;
